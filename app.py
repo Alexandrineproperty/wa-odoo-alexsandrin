@@ -100,7 +100,25 @@ def simpan_crm_odoo(nama, no_hp, teks_pesan, respon_ai):
     except Exception as e:
         print(f"Gagal simpan ke Odoo: {e}")
         return None
-
+def kirim_balasan_wa(no_hp, teks_balasan):
+    try:
+        url = f"https://graph.facebook.com/v18.0/{PHONE_NUMBER_ID}/messages"
+        headers = {
+            "Authorization": f"Bearer {WA_TOKEN}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "messaging_product": "whatsapp",
+            "to": no_hp,
+            "type": "text",
+            "text": {"body": teks_balasan}
+        }
+        response = requests.post(url, headers=headers, json=payload)
+        print(f"Status kirim WA: {response.status_code}, Respon: {response.text}")
+        return response
+    except Exception as e:
+        print(f"Gagal kirim WA: {e}")
+        return None
 @app.route("/webhook", methods=["GET"])
 def verifikasi():
     mode = request.args.get("hub.mode")
