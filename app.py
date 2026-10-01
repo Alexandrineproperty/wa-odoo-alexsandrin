@@ -90,7 +90,7 @@ def simpan_crm_odoo(nama, no_hp, teks_pesan, respon_ai):
             'crm.lead', 'create', [{
                 'name': f"WA Properti: {no_hp}",
                 'contact_name': nama or no_hp,
-                'mobile': no_hp,
+                'phone': no_hp,
                 'type': 'opportunity',
                 'description': f"Pesan Masuk: {teks_pesan}\n\nBalasan AI: {respon_ai}",
             }]
