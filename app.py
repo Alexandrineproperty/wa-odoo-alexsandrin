@@ -10,7 +10,19 @@ app = Flask(__name__)
 GEMINI_KEY = os.environ.get("GEMINI_API_KEY")
 if GEMINI_KEY:
     genai.configure(api_key=GEMINI_KEY)
-    model = genai.GenerativeModel("gemini-pro")
+    
+    # --- DIAGNOSA: Cetak semua model yang bisa digunakan ---
+    print("=== CEK MODEL GEMINI YANG TERSEDIA ===")
+    try:
+        for m in genai.list_models():
+            if 'generateContent' in m.supported_generation_methods:
+                print("Model Aktif:", m.name)
+    except Exception as e:
+        print("Gagal mengambil list model:", e)
+    print("=======================================")
+
+    # Gunakan model sementara
+    model = genai.GenerativeModel("models/gemini-pro")
 
 # Konfigurasi Odoo
 ODOO_URL = os.environ.get("ODOO_URL", "https://billbry.odoo.com")
