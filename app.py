@@ -8,21 +8,30 @@ app = Flask(__name__)
 
 # Konfigurasi Gemini API
 GEMINI_KEY = os.environ.get("GEMINI_API_KEY")
+selected_model = "gemini-1.5-flash"  # Default fallback
+
 if GEMINI_KEY:
     genai.configure(api_key=GEMINI_KEY)
-    
-    # --- DIAGNOSA: Cetak semua model yang bisa digunakan ---
-    print("=== CEK MODEL GEMINI YANG TERSEDIA ===")
     try:
-        for m in genai.list_models():
-            if 'generateContent' in m.supported_generation_methods:
-                print("Model Aktif:", m.name)
+        # Deteksi semua model yang mendukung generateContent
+        active_models = [
+            m.name for m in genai.list_models() 
+            if 'generateContent' in m.supported_generation_methods
+        ]
+        
+        # Filter model yang bisa digunakan untuk teks (abaikan tts/robotics)
+        text_models = [m for m in active_models if "tts" not in m and "robotics" not in m]
+        
+        if text_models:
+            selected_model = text_models[0]
+        elif active_models:
+            selected_model = active_models[0]
+            
+        print(f"=== MODEL GEMINI YANG DIPAKAI: {selected_model} ===")
     except Exception as e:
-        print("Gagal mengambil list model:", e)
-    print("=======================================")
+        print("Gagal deteksi model otomatis:", e)
 
-    # Gunakan model sementara
-    model = genai.GenerativeModel("gemini-1.5-flash")
+model = genai.GenerativeModel(selected_model)
 
 # Konfigurasi Odoo
 ODOO_URL = os.environ.get("ODOO_URL", "https://billbry.odoo.com")
