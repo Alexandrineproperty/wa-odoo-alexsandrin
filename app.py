@@ -12,8 +12,49 @@ GEMINI_KEY = os.environ.get("GEMINI_API_KEY")
 if GEMINI_KEY:
     genai.configure(api_key=GEMINI_KEY)
 
-# Tentukan model utama resmi yang direkomendasikan Google
-model = genai.GenerativeModel("gemini-3.8-flash")
+# System Instruction / Aturan Balasan Otomatis
+SYSTEM_PROMPT = """
+Namamu adalah Rina, Konsultan Layanan Resmi dari Alexandrine Property.
+Gaya bicaramu ramah, sopan, hangat, profesional, dan solutif layaknya seorang konsultan properti tepercaya.
+PENTING: Jangan pernah menyebut dirimu sebagai AI, robot, bot, atau program otomatis. Berinteraksilah secara alami sebagai manusia dari tim Alexandrine Property.
+
+TENTANG ALEXANDRINE PROPERTY:
+Alexandrine Property adalah penyedia solusi properti terpadu dan terlengkap. Layanan utama kami meliputi:
+
+1. JUAL & BELI PROPERTI:
+   - Tanah (tanah kavling, lahan komersial, tanah investasi).
+   - Rumah (hunian pribadi, perumahan, villa).
+   - Gedung (ruko, kantor, gudang, tempat usaha).
+
+2. JASA AGEN PROPERTI (PROPERTY AGENT):
+   - Membantu pemilik properti memasarkan dan menjual/menyewakan properti mereka secara cepat & aman.
+   - Membantu pembeli/penyewa mendapatkan unit properti terbaik sesuai kriteria & budget.
+
+3. JASA DESAIN (ARSIREKTUR & INTERIOR):
+   - Pembuatan konsep desain arsitektur 2D/3D untuk rumah, ruko, maupun gedung.
+   - Perencanaan tata ruang (layout) dan desain interior.
+
+4. JASA PEMBANGUNAN (KONTRAKTOR):
+   - Konstruksi/pembangunan dari nol untuk rumah, ruko, gedung, dll.
+   - Didukung tim ahli, material berkualitas, dan sistem kerja transparan.
+
+5. JASA RENOVASI:
+   - Perbaikan skala kecil hingga besar (peremajaan bangunan, peninggian lantai, pengecatan, ubah tata ruang, perbaikan atap, dll.).
+
+PANDUAN & ATURAN BALASAN WHATSAPP:
+1. Sapa calon klien dengan hangat dan perkenalkan dirimu sebagai Rina dari Alexandrine Property.
+2. Jawab pertanyaan dengan singkat, padat, jelas, dan rapi agar mudah dibaca di WhatsApp.
+3. Tanyakan kebutuhan spesifik calon klien (misal: "Apakah Bapak/Ibu sedang mencari unit siap huni, konsultasi desain, atau ada rencana renovasi?").
+4. Arahkan calon klien untuk membuat jadwal KONSULTASI GRATIS atau SURVEY LOKASI/PROYEK bersama tim ahli kami.
+5. Jika ditanya harga/RAB proyek secara spesifik, berikan gambaran umum lalu sampaikan bahwa tim spesialis kami akan segera menghubungi untuk menghitung detail rancangannya.
+6. Gunakan bahasa Indonesia yang santun, elegan, dan profesional.
+"""
+
+# Tentukan model utama dengan instruksi sistem
+model = genai.GenerativeModel(
+    "gemini-3.8-flash",
+    system_instruction=SYSTEM_PROMPT
+)
 
 # Konfigurasi Odoo
 ODOO_URL = os.environ.get("ODOO_URL", "https://billbry.odoo.com")
@@ -21,31 +62,17 @@ ODOO_DB = os.environ.get("ODOO_DB", "billbry")
 ODOO_USER = os.environ.get("ODOO_USER", "cvbillbrymustikakarya@gmail.com")
 ODOO_PASS = os.environ.get("ODOO_PASS")
 
+
+
 # Konfigurasi WhatsApp Cloud API
 WA_TOKEN = os.environ.get("WA_TOKEN")
 PHONE_NUMBER_ID = os.environ.get("PHONE_NUMBER_ID")
 VERIFY_TOKEN = os.environ.get("VERIFY_TOKEN", "alexsandrin123")
 
+
 def simpan_crm_odoo(nama, no_hp, teks_pesan, respon_ai):
     try:
-        common = xmlrpc.client.ServerProxy(f"{ODOO_URL}/xmlrpc/2/common")
-        uid = common.authenticate(ODOO_DB, ODOO_USER, ODOO_PASS, {})
-        if not uid:
-            return None
-        models = xmlrpc.client.ServerProxy(f"{ODOO_URL}/xmlrpc/2/object")
-        lead_id = models.execute_kw(
-            ODOO_DB, uid, ODOO_PASS,
-            'crm.lead', 'create', [{
-                'name': f"WA Properti: {no_hp}",
-                'contact_name': nama or no_hp,
-                'mobile': no_hp,
-                'description': f"Pesan Masuk: {teks_pesan}\n\nBalasan AI: {respon_ai}",
-            }]
-        )
-        return lead_id
-   def simpan_crm_odoo(nama, no_hp, teks_pesan, respon_ai):
-    try:
-        raw_url = os.environ.get("ODOO_URL", "https://billbry.odoo.com").strip().rstrip("/")
+        raw_url = ODOO_URL.strip().rstrip("/")
         if not raw_url.startswith("http://") and not raw_url.startswith("https://"):
             url_odoo = f"https://{raw_url}"
         else:
@@ -64,6 +91,15 @@ def simpan_crm_odoo(nama, no_hp, teks_pesan, respon_ai):
                 'name': f"WA Properti: {no_hp}",
                 'contact_name': nama or no_hp,
                 'mobile': no_hp,
+                'type': 'opportunity',
+                'description': f"Pesan Masuk: {teks_pesan}\n\nBalasan AI: {respon_ai}",
+            }]
+        )
+        print(f"Berhasil simpan ke Odoo dengan Lead ID: {lead_id}")
+        return lead_id
+    except Exception as e:
+        print(f"Gagal simpan ke Odoo: {e}")
+        return None
                 'type': 'opportunity',
                 'description': f"Pesan Masuk: {teks_pesan}\n\nBalasan AI: {respon_ai}",
             }]
