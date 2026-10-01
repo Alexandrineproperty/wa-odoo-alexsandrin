@@ -22,7 +22,7 @@ if GEMINI_KEY:
     print("=======================================")
 
     # Gunakan model sementara
-    model = genai.GenerativeModel("models/gemini-pro")
+    model = genai.GenerativeModel("gemini-1.5-flash")
 
 # Konfigurasi Odoo
 ODOO_URL = os.environ.get("ODOO_URL", "https://billbry.odoo.com")
