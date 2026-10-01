@@ -140,21 +140,23 @@ def webhook():
             nama_profil = entry.get("contacts", [{}])[0].get("profile", {}).get("name", pengirim)
 
             # Buat balasan dengan Gemini
-            prompt = (
-                f"Anda adalah asisten virtual resmi Alexandrine Properti. "
-                f"Balas dengan sopan, ramah, dan profesional pertanyaan calon pembeli berikut: '{teks}'"
-            )
-            ai_reply = model.generate_content(prompt).text
+            try:
+                ai_reply = model.generate_content(teks).text
+            except Exception as e:
+                print(f"Gemini Limit Error: {e}")
+                ai_reply = "Halo! Terima kasih telah menghubungi Alexandrine Property. Saya Rina. Tim konsultan kami akan segera memberikan informasi lengkap mengenai unit properti kami."
 
             # Kirim balasan ke WhatsApp calon pembeli
             kirim_balasan_wa(pengirim, ai_reply)
 
-            # Rekam prospek ke CRM Odoo
+            # Simpan ke CRM Odoo
             simpan_crm_odoo(nama_profil, pengirim, teks, ai_reply)
+
     except Exception as e:
         print(f"Error proses webhook: {e}")
 
-    return jsonify({"status": "success"}), 200
+    return "OK", 200
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
