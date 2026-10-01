@@ -43,27 +43,36 @@ def simpan_crm_odoo(nama, no_hp, teks_pesan, respon_ai):
             }]
         )
         return lead_id
+   def simpan_crm_odoo(nama, no_hp, teks_pesan, respon_ai):
+    try:
+        raw_url = os.environ.get("ODOO_URL", "https://billbry.odoo.com").strip().rstrip("/")
+        if not raw_url.startswith("http://") and not raw_url.startswith("https://"):
+            url_odoo = f"https://{raw_url}"
+        else:
+            url_odoo = raw_url
+
+        common = xmlrpc.client.ServerProxy(f"{url_odoo}/xmlrpc/2/common")
+        uid = common.authenticate(ODOO_DB, ODOO_USER, ODOO_PASS, {})
+        if not uid:
+            print("Gagal otentikasi Odoo")
+            return None
+
+        models = xmlrpc.client.ServerProxy(f"{url_odoo}/xmlrpc/2/object")
+        lead_id = models.execute_kw(
+            ODOO_DB, uid, ODOO_PASS,
+            'crm.lead', 'create', [{
+                'name': f"WA Properti: {no_hp}",
+                'contact_name': nama or no_hp,
+                'mobile': no_hp,
+                'type': 'opportunity',
+                'description': f"Pesan Masuk: {teks_pesan}\n\nBalasan AI: {respon_ai}",
+            }]
+        )
+        print(f"Berhasil simpan ke Odoo dengan Lead ID: {lead_id}")
+        return lead_id
     except Exception as e:
         print(f"Gagal simpan ke Odoo: {e}")
         return None
-
-def kirim_balasan_wa(no_hp, pesan_teks):
-    url = f"https://graph.facebook.com/v20.0/{PHONE_NUMBER_ID}/messages"
-    headers = {
-        "Authorization": f"Bearer {WA_TOKEN}",
-        "Content-Type": "application/json"
-    }
-    payload = {
-        "messaging_product": "whatsapp",
-        "to": no_hp,
-        "type": "text",
-        "text": {"body": pesan_teks}
-    }
-    requests.post(url, headers=headers, json=payload)
-
-@app.route("/", methods=["GET"])
-def home():
-    return "Server Alexandrine Properti Aktif!", 200
 
 @app.route("/webhook", methods=["GET"])
 def verifikasi():
