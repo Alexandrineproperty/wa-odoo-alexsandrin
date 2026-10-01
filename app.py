@@ -100,15 +100,6 @@ def simpan_crm_odoo(nama, no_hp, teks_pesan, respon_ai):
     except Exception as e:
         print(f"Gagal simpan ke Odoo: {e}")
         return None
-                'type': 'opportunity',
-                'description': f"Pesan Masuk: {teks_pesan}\n\nBalasan AI: {respon_ai}",
-            }]
-        )
-        print(f"Berhasil simpan ke Odoo dengan Lead ID: {lead_id}")
-        return lead_id
-    except Exception as e:
-        print(f"Gagal simpan ke Odoo: {e}")
-        return None
 
 @app.route("/webhook", methods=["GET"])
 def verifikasi():
